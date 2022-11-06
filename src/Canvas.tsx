@@ -34,8 +34,7 @@ const renderPlateLayer = (ctx: CanvasRenderingContext2D, layer: PlateLayer, idx:
 
   const totalPrice = placements.reduce((acc, val) => (acc += val.brick.price), 0);
 
-  ctx.fillStyle = '#fff';
-  ctx.fillText(`layer ${idx} Plates used: ${placements.length}  Total price: DKK ${totalPrice.toFixed(2)}`, 0, 20);
+  console.log(`layer ${idx} Plates used: ${placements.length}  Total price: DKK ${totalPrice.toFixed(2)}`);
 };
 
 const renderDotLayer = (ctx: CanvasRenderingContext2D, layer: DotLayer) => {
