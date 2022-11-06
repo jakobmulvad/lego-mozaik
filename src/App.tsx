@@ -1,8 +1,10 @@
+import { Box, Container, Button, Divider, Typography } from '@mui/material';
+import { Stack } from '@mui/system';
 import { ChangeEvent, FC, useEffect, useState } from 'react';
-import './App.css';
 import { calculateBricks } from './brick-optimizer';
 import { Canvas, DotLayer, Layer, PlateLayer } from './Canvas';
 import { Dot, dotsInWorldmap, findBestMatchingDot } from './dots';
+import UploadIcon from '@mui/icons-material/Upload';
 
 const buildPlateLayer = (imageData: ImageData): PlateLayer => {
   const mask: boolean[] = [];
@@ -61,9 +63,7 @@ const App: FC = () => {
     const img = new Image();
     img.onload = () => {
       ctx.drawImage(img, 0, 0);
-
       const imageData = ctx.getImageData(0, 0, img.width, img.height);
-
       let layer: Layer;
 
       switch (type) {
@@ -127,13 +127,44 @@ const App: FC = () => {
   }, [layers]);
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <input type="file" accept="image/*" onChange={(evt) => onChange(evt, 'PLATE')} />
-        <input type="file" accept="image/*" onChange={(evt) => onChange(evt, 'DOT')} />
+    <main style={{ backgroundColor: '#202030', height: '100vh', color: '#efefef' }}>
+      <Container>
         <Canvas layers={layers} />
-      </header>
-    </div>
+      </Container>
+      <Box position="absolute" left={8} top={8} flexDirection="column">
+        <Stack
+          direction="column"
+          spacing={1}
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)', padding: 8, borderRadius: 8 }}
+        >
+          <Box>
+            <Typography variant="h5">Layers</Typography>
+            {layers.map((l) => {
+              if (l.type === 'DOT') {
+                return <Typography ml={1}>Color ({l.dots.length} pieces)</Typography>;
+              }
+              return <Typography ml={1}>Elevation ({l.placements.length} pieces)</Typography>;
+            })}
+          </Box>
+          <Divider></Divider>
+          <label>
+            <input style={{ display: 'none' }} type="file" onChange={(evt) => onChange(evt, 'DOT')} />
+
+            <Button variant="contained" component="span" startIcon={<UploadIcon />}>
+              Upload color layer
+            </Button>
+          </label>
+
+          <label>
+            <input style={{ display: 'none' }} type="file" onChange={(evt) => onChange(evt, 'PLATE')} />
+
+            <Button variant="contained" component="span" startIcon={<UploadIcon />}>
+              Upload elevation layer
+            </Button>
+          </label>
+        </Stack>
+      </Box>
+    </main>
   );
 };
 
