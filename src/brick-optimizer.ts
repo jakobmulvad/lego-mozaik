@@ -185,8 +185,8 @@ export const calculateBricks = (layout: BrickLayout): BrickPlacement[] => {
 };
 
 const calculateBrickPlacement = (layout: BrickLayout, brick: Brick): BrickPlacement | undefined => {
-  for (let y = 0; y < layout.height - brick.length; y++) {
-    for (let x = 0; x < layout.width - brick.width; x++) {
+  for (let y = 0; y < layout.height - brick.length + 1; y++) {
+    for (let x = 0; x < layout.width - brick.width + 1; x++) {
       if (canBrickFit(layout, x, y, brick)) {
         // Mark area as "taken"
         for (let by = y; by < brick.length + y; by++) {

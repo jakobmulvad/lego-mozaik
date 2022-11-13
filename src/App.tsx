@@ -1,10 +1,10 @@
-import { Box, Container, Button, Divider, Typography } from '@mui/material';
+import { Box, Button, Divider, Typography } from '@mui/material';
 import { Stack } from '@mui/system';
 import { ChangeEvent, FC, useEffect, useState } from 'react';
 import { calculateBricks } from './brick-optimizer';
 import { Canvas, DotLayer, Layer, PlateLayer } from './Canvas';
 import { Dot, dotsInWorldmap, findBestMatchingDot } from './dots';
-import UploadIcon from '@mui/icons-material/Upload';
+import Add from '@mui/icons-material/Add';
 
 const buildPlateLayer = (imageData: ImageData): PlateLayer => {
   const mask: boolean[] = [];
@@ -128,9 +128,7 @@ const App: FC = () => {
 
   return (
     <main style={{ backgroundColor: '#202030', height: '100vh', color: '#efefef' }}>
-      <Container>
-        <Canvas layers={layers} />
-      </Container>
+      <Canvas layers={layers} />
       <Box position="absolute" left={8} top={8} flexDirection="column">
         <Stack
           direction="column"
@@ -150,16 +148,16 @@ const App: FC = () => {
           <label>
             <input style={{ display: 'none' }} type="file" onChange={(evt) => onChange(evt, 'DOT')} />
 
-            <Button variant="contained" component="span" startIcon={<UploadIcon />}>
-              Upload color layer
+            <Button variant="contained" component="span" startIcon={<Add />}>
+              Add color layer
             </Button>
           </label>
 
           <label>
             <input style={{ display: 'none' }} type="file" onChange={(evt) => onChange(evt, 'PLATE')} />
 
-            <Button variant="contained" component="span" startIcon={<UploadIcon />}>
-              Upload elevation layer
+            <Button variant="contained" component="span" startIcon={<Add />}>
+              Add elevation layer
             </Button>
           </label>
         </Stack>

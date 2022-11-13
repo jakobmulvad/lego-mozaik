@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef } from 'react';
+import { FC, useEffect, useRef, useCallback, MouseEvent, useState, WheelEvent } from 'react';
 import { BrickPlacement } from './brick-optimizer';
 import { mozaikHeight, mozaikWidth } from './constants';
 import { Dot } from './dots';
@@ -31,10 +31,6 @@ const renderPlateLayer = (ctx: CanvasRenderingContext2D, layer: PlateLayer, idx:
       }
     }
   }
-
-  const totalPrice = placements.reduce((acc, val) => (acc += val.brick.price), 0);
-
-  console.log(`layer ${idx} Plates used: ${placements.length}  Total price: DKK ${totalPrice.toFixed(2)}`);
 };
 
 const renderDotLayer = (ctx: CanvasRenderingContext2D, layer: DotLayer) => {
@@ -50,13 +46,29 @@ const renderDotLayer = (ctx: CanvasRenderingContext2D, layer: DotLayer) => {
 };
 
 export const Canvas: FC<{ layers: Layer[] }> = ({ layers }) => {
-  useEffect(() => {
+  const [offscreenBuffer, setOffscreenBuffer] = useState<HTMLCanvasElement | undefined>();
+  const [transform, setTransform] = useState<DOMMatrix>(new DOMMatrix());
+
+  const render = useCallback(() => {
     const ctx = canvasRef.current?.getContext('2d');
-    if (!ctx) {
+    if (!ctx || !canvasRef.current || !offscreenBuffer) {
       return;
     }
 
-    ctx.clearRect(0, 0, mozaikWidth * 10, mozaikHeight * 10);
+    ctx.resetTransform();
+    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    ctx.setTransform(transform);
+    ctx.drawImage(offscreenBuffer, 0, 0);
+  }, [offscreenBuffer, transform]);
+
+  useEffect(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = mozaikWidth * 10;
+    canvas.height = mozaikHeight * 10;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      return;
+    }
 
     let i = 0;
     for (const layer of layers) {
@@ -69,8 +81,69 @@ export const Canvas: FC<{ layers: Layer[] }> = ({ layers }) => {
           break;
       }
     }
+
+    setOffscreenBuffer(canvas);
   }, [layers]);
 
+  useEffect(() => {
+    render();
+  }, [render]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    canvas.width = document.body.clientWidth;
+    canvas.height = document.body.clientHeight;
+  }, []);
+
+  const onMouseMove = useCallback(
+    (evt: MouseEvent<HTMLCanvasElement>) => {
+      if (evt.buttons !== 1) {
+        return;
+      }
+
+      const ctx = canvasRef.current?.getContext('2d');
+      if (!ctx) {
+        return;
+      }
+
+      setTransform((current) => {
+        const trans = new DOMMatrix().translate(evt.movementX, evt.movementY);
+        console.log(trans);
+        return current.multiply(trans);
+      });
+      //transform.translate(evt.movementX, evt.movementY);
+      render();
+    },
+    [render, setTransform]
+  );
+
+  const onWheel = useCallback(
+    (evt: WheelEvent<HTMLCanvasElement>) => {
+      console.log(evt.deltaY);
+
+      const ctx = canvasRef.current?.getContext('2d');
+      if (!ctx) {
+        return;
+      }
+
+      setTransform((current) => current.scale(1 + evt.deltaY * 0.001));
+      render();
+    },
+    [render, setTransform]
+  );
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  return <canvas width={mozaikWidth * 10} height={mozaikHeight * 10} ref={canvasRef} />;
+  return (
+    <canvas
+      width={mozaikWidth * 10}
+      height={mozaikHeight * 10}
+      ref={canvasRef}
+      onMouseMove={onMouseMove}
+      onWheel={onWheel}
+    />
+  );
 };
