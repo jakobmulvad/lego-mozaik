@@ -1,10 +1,11 @@
-import { Box, Button, Divider, Typography } from '@mui/material';
-import { Stack } from '@mui/system';
+import { Box, Button, Text, Stack } from '@chakra-ui/react';
 import { ChangeEvent, FC, useEffect, useState } from 'react';
 import { calculateBricks } from './brick-optimizer';
-import { Canvas, DotLayer, Layer, PlateLayer } from './Canvas';
+import { Canvas, DotLayer, Layer, PlateLayer } from './components/Canvas';
 import { Dot, dotsInWorldmap, findBestMatchingDot } from './dots';
-import Add from '@mui/icons-material/Add';
+import { FloatingPanel } from './components/FloatingPanel';
+import { NewMozaikModel } from './components/NewMozaikModal';
+import { StarIcon, AddIcon } from '@chakra-ui/icons';
 
 const buildPlateLayer = (imageData: ImageData): PlateLayer => {
   const mask: boolean[] = [];
@@ -126,15 +127,45 @@ const App: FC = () => {
     }, 0);*/
   }, [layers]);
 
+  const [open, setOpen] = useState(false);
+
+  const handleOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
   return (
-    <main style={{ backgroundColor: '#202030', height: '100vh', color: '#efefef' }}>
+    <main style={{ backgroundColor: '#202030', height: '100vh' }}>
       <Canvas layers={layers} />
       <Box position="absolute" left={8} top={8} flexDirection="column">
-        <Stack
-          direction="column"
-          spacing={1}
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)', padding: 8, borderRadius: 8 }}
-        >
+        <FloatingPanel>
+          <Stack spacing={4} direction="row">
+            <Button leftIcon={<StarIcon />} onClick={handleOpen}>
+              New mozaik
+            </Button>
+            <Button leftIcon={<AddIcon />}>Add elevation</Button>
+          </Stack>
+        </FloatingPanel>
+
+        <FloatingPanel>
+          <Text>Color</Text>
+        </FloatingPanel>
+
+        <FloatingPanel>
+          <Text>Elevation</Text>
+        </FloatingPanel>
+      </Box>
+      <NewMozaikModel isOpen={open} onClose={handleClose}></NewMozaikModel>
+    </main>
+  );
+};
+
+export default App;
+
+/*<Stack direction="column" spacing={1}>
           <Box>
             <Typography variant="h5">Layers</Typography>
             {layers.map((l) => {
@@ -147,23 +178,10 @@ const App: FC = () => {
           <Divider></Divider>
           <label>
             <input style={{ display: 'none' }} type="file" onChange={(evt) => onChange(evt, 'DOT')} />
-
-            <Button variant="contained" component="span" startIcon={<Add />}>
-              Add color layer
-            </Button>
           </label>
 
           <label>
             <input style={{ display: 'none' }} type="file" onChange={(evt) => onChange(evt, 'PLATE')} />
-
-            <Button variant="contained" component="span" startIcon={<Add />}>
-              Add elevation layer
-            </Button>
           </label>
         </Stack>
-      </Box>
-    </main>
-  );
-};
-
-export default App;
+          */

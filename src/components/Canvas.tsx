@@ -1,7 +1,7 @@
 import { FC, useEffect, useRef, useCallback, MouseEvent, useState, WheelEvent } from 'react';
-import { BrickPlacement } from './brick-optimizer';
-import { mozaikHeight, mozaikWidth } from './constants';
-import { Dot } from './dots';
+import { BrickPlacement } from '../brick-optimizer';
+import { mozaikHeight, mozaikWidth } from '../constants';
+import { Dot } from '../dots';
 
 export type PlateLayer = {
   type: 'PLATE';
