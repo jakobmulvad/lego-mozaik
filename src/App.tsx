@@ -1,12 +1,13 @@
-import { Box, Button, Text, Stack } from '@chakra-ui/react';
-import { ChangeEvent, FC, useEffect, useState } from 'react';
-import { calculateBricks } from './brick-optimizer';
-import { Canvas, DotLayer, Layer, PlateLayer } from './components/Canvas';
-import { Dot, dotsInWorldmap, findBestMatchingDot } from './dots';
+import { Box, Button, Text, Stack, useDisclosure, Slider, SliderThumb, SliderTrack } from '@chakra-ui/react';
+import { FC, useCallback, useMemo, useState } from 'react';
 import { FloatingPanel } from './components/FloatingPanel';
 import { NewMozaikModel } from './components/NewMozaikModal';
 import { StarIcon, AddIcon } from '@chakra-ui/icons';
+import { AppState } from './app-state';
+import { Canvas } from './components/Canvas';
+import { findBestMatchingColor, hslToRgb, rgbToHsl } from './lego-colors';
 
+/*
 const buildPlateLayer = (imageData: ImageData): PlateLayer => {
   const mask: boolean[] = [];
 
@@ -49,11 +50,31 @@ const buildDotLayer = (imageData: ImageData): DotLayer => {
     dots,
   };
 };
+*/
 
 const App: FC = () => {
-  const [layers, setLayers] = useState<Layer[]>([]);
+  const [appState, setAppState] = useState<AppState | undefined>();
 
-  const onChange = (evt: ChangeEvent<HTMLInputElement>, type: Layer['type']) => {
+  const legoColors = useMemo(() => {
+    return appState?.sourceColors.map((color) => {
+      /*const r = (color >> 16) & 0xff;
+      const g = (color >> 8) & 0xff;
+      const b = color & 0xff;*/
+
+      // eslint-disable-next-line prefer-const
+      let [h, s, l] = rgbToHsl([(color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff]);
+
+      h += appState.colorAdjustment.hue;
+      s += appState.colorAdjustment.saturation;
+      l += appState.colorAdjustment.brightness;
+
+      const [r, g, b] = hslToRgb([h, s, l]);
+
+      return findBestMatchingColor(r, g, b);
+    });
+  }, [appState]);
+
+  /*const onChange = (evt: ChangeEvent<HTMLInputElement>, type: Layer['type']) => {
     const file = evt.target.files?.[0];
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -124,41 +145,81 @@ const App: FC = () => {
       const dotsFromWorldmap = dotsInWorldmap[element] ?? 0;
       const dotsNeeded = Math.max(0, elementDistribution[element] - dotsFromWorldmap);
       return acc + 0.26 * dotsNeeded;
-    }, 0);*/
-  }, [layers]);
+    }, 0);
+  }, [layers]);*/
 
-  const [open, setOpen] = useState(false);
+  const { isOpen, onClose, onOpen } = useDisclosure();
 
-  const handleOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
+  const onColorAdjustmentChange = useCallback(
+    (property: keyof AppState['colorAdjustment'], value: number) => {
+      setAppState(
+        (state) =>
+          state && {
+            ...state,
+            colorAdjustment: {
+              ...state.colorAdjustment,
+              [property]: value,
+            },
+          }
+      );
+    },
+    [setAppState]
+  );
 
   return (
     <main style={{ backgroundColor: '#202030', height: '100vh' }}>
-      <Canvas layers={layers} />
+      {legoColors && appState && <Canvas legoColors={legoColors} width={appState.width} height={appState.height} />}
       <Box position="absolute" left={8} top={8} flexDirection="column">
         <FloatingPanel>
           <Stack spacing={4} direction="row">
-            <Button leftIcon={<StarIcon />} onClick={handleOpen}>
+            <Button leftIcon={<StarIcon />} onClick={onOpen}>
               New mozaik
             </Button>
-            <Button leftIcon={<AddIcon />}>Add elevation</Button>
           </Stack>
         </FloatingPanel>
 
         <FloatingPanel>
-          <Text>Color</Text>
+          <Stack>
+            <Text>Color adjustment</Text>
+            <Text size="lg">Hue</Text>
+            <Slider
+              min={-180}
+              max={180}
+              value={appState?.colorAdjustment.hue ?? 0}
+              onChange={(val) => onColorAdjustmentChange('hue', val)}
+            >
+              <SliderThumb />
+              <SliderTrack />
+            </Slider>
+            <Text size="lg">Saturation</Text>
+            <Slider
+              min={-100}
+              max={100}
+              value={appState?.colorAdjustment.saturation ?? 0}
+              onChange={(val) => onColorAdjustmentChange('saturation', val)}
+            >
+              <SliderThumb />
+              <SliderTrack />
+            </Slider>
+            <Text size="lg">Brightness</Text>
+            <Slider
+              min={-100}
+              max={100}
+              value={appState?.colorAdjustment.brightness ?? 0}
+              onChange={(val) => onColorAdjustmentChange('brightness', val)}
+            >
+              <SliderThumb />
+              <SliderTrack />
+            </Slider>
+          </Stack>
         </FloatingPanel>
 
         <FloatingPanel>
           <Text>Elevation</Text>
+          <Button leftIcon={<AddIcon />}>Add elevation</Button>
         </FloatingPanel>
       </Box>
-      <NewMozaikModel isOpen={open} onClose={handleClose}></NewMozaikModel>
+      <NewMozaikModel isOpen={isOpen} onClose={onClose} onDone={setAppState} />
     </main>
   );
 };

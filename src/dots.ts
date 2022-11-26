@@ -1,4 +1,4 @@
-import { hexToRGB, LegoColor, LEGO_COLORS } from './lego-colors';
+import { LegoColor, LEGO_COLORS } from './lego-colors';
 
 export type Dot = {
   element: number;
@@ -49,21 +49,4 @@ export const dotsInWorldmap: Record<number, number> = {
   6284573: 725,
   6322819: 1607,
   6311436: 601,
-};
-
-export const findBestMatchingDot = (r: number, g: number, b: number): Dot => {
-  let bestMatch = DOTS[0];
-  let bestError = Number.POSITIVE_INFINITY;
-  for (const dot of DOTS) {
-    const dotColor = hexToRGB(dot.color.code);
-    const dr = r - dotColor[0];
-    const dg = g - dotColor[1];
-    const db = b - dotColor[2];
-    const error = dr * dr + dg * dg + db * db;
-    if (error < bestError) {
-      bestError = error;
-      bestMatch = dot;
-    }
-  }
-  return bestMatch;
 };

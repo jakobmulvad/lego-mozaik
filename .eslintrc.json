@@ -3,7 +3,7 @@
   "parserOptions": {
     "project": "./tsconfig.json"
   },
-  "plugins": ["prettier", "@typescript-eslint", "unused-imports"],
+  "plugins": ["prettier", "@typescript-eslint", "unused-imports", "eslint-plugin-import", "eslint-plugin-jsx-a11y", "eslint-plugin-react", "eslint-plugin-react-hooks"],
   "rules": {
     "prettier/prettier": "error",
     "unused-imports/no-unused-imports": "error",

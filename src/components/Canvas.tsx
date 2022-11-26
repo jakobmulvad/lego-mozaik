@@ -1,7 +1,7 @@
 import { FC, useEffect, useRef, useCallback, MouseEvent, useState, WheelEvent } from 'react';
 import { BrickPlacement } from '../brick-optimizer';
-import { mozaikHeight, mozaikWidth } from '../constants';
 import { Dot } from '../dots';
+import { LegoColor } from '../lego-colors';
 
 export type PlateLayer = {
   type: 'PLATE';
@@ -33,11 +33,11 @@ const renderPlateLayer = (ctx: CanvasRenderingContext2D, layer: PlateLayer, idx:
   }
 };
 
-const renderDotLayer = (ctx: CanvasRenderingContext2D, layer: DotLayer) => {
-  for (let y = 0; y < mozaikHeight; y++) {
-    for (let x = 0; x < mozaikWidth; x++) {
-      const dot = layer.dots[x + y * mozaikWidth];
-      ctx.fillStyle = `#${dot.color.code}`;
+const renderDotLayer = (ctx: CanvasRenderingContext2D, colors: LegoColor[], width: number, height: number) => {
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const color = colors[x + y * width];
+      ctx.fillStyle = `#${color.code.toString(16).padStart(6, '0')}`;
       ctx.beginPath();
       ctx.ellipse((x + 0.5) * 10, (y + 0.5) * 10, 5, 5, 0, 0, Math.PI * 2);
       ctx.fill();
@@ -45,9 +45,23 @@ const renderDotLayer = (ctx: CanvasRenderingContext2D, layer: DotLayer) => {
   }
 };
 
-export const Canvas: FC<{ layers: Layer[] }> = ({ layers }) => {
+export const Canvas: FC<{ legoColors: LegoColor[]; width: number; height: number }> = ({
+  legoColors,
+  width,
+  height,
+}) => {
   const [offscreenBuffer, setOffscreenBuffer] = useState<HTMLCanvasElement | undefined>();
   const [transform, setTransform] = useState<DOMMatrix>(new DOMMatrix());
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Keep canvas fullscreen
+  useEffect(() => {
+    if (!canvasRef.current) {
+      return;
+    }
+    canvasRef.current.width = window.innerWidth;
+    canvasRef.current.height = window.innerHeight;
+  }, [canvasRef.current]);
 
   const render = useCallback(() => {
     const ctx = canvasRef.current?.getContext('2d');
@@ -63,14 +77,14 @@ export const Canvas: FC<{ layers: Layer[] }> = ({ layers }) => {
 
   useEffect(() => {
     const canvas = document.createElement('canvas');
-    canvas.width = mozaikWidth * 10;
-    canvas.height = mozaikHeight * 10;
+    canvas.width = width * 10;
+    canvas.height = height * 10;
     const ctx = canvas.getContext('2d');
     if (!ctx) {
       return;
     }
 
-    let i = 0;
+    /*let i = 0;
     for (const layer of layers) {
       switch (layer.type) {
         case 'PLATE':
@@ -80,10 +94,12 @@ export const Canvas: FC<{ layers: Layer[] }> = ({ layers }) => {
           renderDotLayer(ctx, layer);
           break;
       }
-    }
+    }*/
+
+    renderDotLayer(ctx, legoColors, width, height);
 
     setOffscreenBuffer(canvas);
-  }, [layers]);
+  }, [legoColors, width, height]);
 
   useEffect(() => {
     render();
@@ -112,7 +128,6 @@ export const Canvas: FC<{ layers: Layer[] }> = ({ layers }) => {
 
       setTransform((current) => {
         const trans = new DOMMatrix().translate(evt.movementX, evt.movementY);
-        console.log(trans);
         return current.multiply(trans);
       });
       //transform.translate(evt.movementX, evt.movementY);
@@ -136,14 +151,5 @@ export const Canvas: FC<{ layers: Layer[] }> = ({ layers }) => {
     [render, setTransform]
   );
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  return (
-    <canvas
-      width={mozaikWidth * 10}
-      height={mozaikHeight * 10}
-      ref={canvasRef}
-      onMouseMove={onMouseMove}
-      onWheel={onWheel}
-    />
-  );
+  return <canvas ref={canvasRef} onMouseMove={onMouseMove} onWheel={onWheel} />;
 };
