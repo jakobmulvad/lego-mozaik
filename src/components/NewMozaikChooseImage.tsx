@@ -18,7 +18,9 @@ import { DownloadIcon, WarningTwoIcon } from '@chakra-ui/icons';
 export type NewMozaikChooseImageProps = { onDone: (imageData: ImageData) => void } & Omit<ModalProps, 'children'>;
 
 export const NewMozaikChooseImage: FC<NewMozaikChooseImageProps> = ({ onDone, ...modalProps }) => {
-  const [imageUrl, setImageUrl] = useState('');
+  const [imageUrl, setImageUrl] = useState(
+    'https://assets.change.org/photos/9/rg/bj/nmrgBjEiSuFQlGQ-1600x900-noPad.jpg?1626182653'
+  );
   const [error, setError] = useState<string | undefined>();
   const fileInputRef = useRef<HTMLInputElement>(null);
 

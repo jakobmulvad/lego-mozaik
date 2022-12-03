@@ -5,7 +5,6 @@ import { NewMozaikModel } from './components/NewMozaikModal';
 import { StarIcon, AddIcon } from '@chakra-ui/icons';
 import { AppState } from './app-state';
 import { Canvas } from './components/Canvas';
-import { findBestMatchingColor, hslToRgb, rgbToHsl } from './lego-colors';
 
 /*
 const buildPlateLayer = (imageData: ImageData): PlateLayer => {
@@ -56,22 +55,73 @@ const App: FC = () => {
   const [appState, setAppState] = useState<AppState | undefined>();
 
   const legoColors = useMemo(() => {
-    return appState?.sourceColors.map((color) => {
-      /*const r = (color >> 16) & 0xff;
-      const g = (color >> 8) & 0xff;
-      const b = color & 0xff;*/
+    if (!appState) {
+      return undefined;
+    }
 
-      // eslint-disable-next-line prefer-const
-      let [h, s, l] = rgbToHsl([(color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff]);
+    return appState.sourceColors.map((s) => ({
+      number: 1,
+      code: s,
+    }));
 
-      h += appState.colorAdjustment.hue;
-      s += appState.colorAdjustment.saturation;
-      l += appState.colorAdjustment.brightness;
+    /*const colorBuffer = appState.sourceColors.slice() as unknown as LegoColor[];
+    const errorBufferR = new Int16Array((appState.width + 1) * (appState.height + 1)).fill(0);
+    const errorBufferG = errorBufferR.slice();
+    const errorBufferB = errorBufferR.slice();
 
-      const [r, g, b] = hslToRgb([h, s, l]);
+    for (let y = 0; y < appState.height; y++) {
+      for (let x = 0; x < appState.width; x++) {
+        const i = x + y * appState.width;
+        let ei = x + y * (appState.width + 1);
+        const source = appState.sourceColors[x + y * appState.width];
 
-      return findBestMatchingColor(r, g, b);
-    });
+        let [h, s, l] = rgbToHsl([(source >> 16) & 0xff, (source >> 8) & 0xff, source & 0xff]);
+
+        h += appState.colorAdjustment.hue;
+        s *= 1 + appState.colorAdjustment.saturation * 0.01;
+        l *= 1 + appState.colorAdjustment.brightness * 0.01;
+
+        let [r, g, b] = hslToRgb([h, s, l]);
+
+        r += errorBufferR[ei] * appState.colorAdjustment.dithering * 0.01;
+        g += errorBufferG[ei] * appState.colorAdjustment.dithering * 0.01;
+        b += errorBufferB[ei] * appState.colorAdjustment.dithering * 0.01;
+
+        const bestMatch = findBestMatchingColor(r, g, b);
+
+        colorBuffer[i] = bestMatch;
+
+        const errorR = r - ((bestMatch.code >> 16) & 0xff);
+        const errorG = g - ((bestMatch.code >> 8) & 0xff);
+        const errorB = b - (bestMatch.code & 0xff);
+
+        // Floyd–Steinberg dithering weights
+        ei++;
+        errorBufferR[ei] += Math.round((errorR * 7) / 16);
+        errorBufferG[ei] += Math.round((errorG * 7) / 16);
+        errorBufferB[ei] += Math.round((errorB * 7) / 16);
+
+        if (x > 0) {
+          ei += appState.width - 1;
+          errorBufferR[ei] += Math.round((errorR * 3) / 16);
+          errorBufferG[ei] += Math.round((errorG * 3) / 16);
+          errorBufferB[ei] += Math.round((errorB * 3) / 16);
+        }
+
+        ei++;
+        errorBufferR[ei] += Math.round((errorR * 5) / 16);
+        errorBufferG[ei] += Math.round((errorG * 5) / 16);
+        errorBufferB[ei] += Math.round((errorB * 5) / 16);
+
+        ei++;
+        errorBufferR[ei] += Math.round(errorR / 16);
+        errorBufferG[ei] += Math.round(errorG / 16);
+        errorBufferB[ei] += Math.round(errorB / 16);
+      }
+    }
+    return colorBuffer;
+    ¨
+  */
   }, [appState]);
 
   /*const onChange = (evt: ChangeEvent<HTMLInputElement>, type: Layer['type']) => {
@@ -151,7 +201,7 @@ const App: FC = () => {
   const { isOpen, onClose, onOpen } = useDisclosure();
 
   const onColorAdjustmentChange = useCallback(
-    (property: keyof AppState['colorAdjustment'], value: number) => {
+    <T extends keyof AppState['colorAdjustment']>(property: T, value: AppState['colorAdjustment'][T]) => {
       setAppState(
         (state) =>
           state && {
@@ -180,18 +230,18 @@ const App: FC = () => {
 
         <FloatingPanel>
           <Stack>
-            <Text>Color adjustment</Text>
-            <Text size="lg">Hue</Text>
+            <Text fontSize="xl">Color adjustment</Text>
+            <Text size="lg">Hue ({appState?.colorAdjustment.hue ?? 0}°)</Text>
             <Slider
-              min={-180}
-              max={180}
+              min={-90}
+              max={90}
               value={appState?.colorAdjustment.hue ?? 0}
               onChange={(val) => onColorAdjustmentChange('hue', val)}
             >
               <SliderThumb />
               <SliderTrack />
             </Slider>
-            <Text size="lg">Saturation</Text>
+            <Text>Saturation ({appState?.colorAdjustment.saturation ?? 0}%)</Text>
             <Slider
               min={-100}
               max={100}
@@ -201,12 +251,22 @@ const App: FC = () => {
               <SliderThumb />
               <SliderTrack />
             </Slider>
-            <Text size="lg">Brightness</Text>
+            <Text>Brightness ({appState?.colorAdjustment.brightness ?? 0}%)</Text>
             <Slider
               min={-100}
               max={100}
               value={appState?.colorAdjustment.brightness ?? 0}
               onChange={(val) => onColorAdjustmentChange('brightness', val)}
+            >
+              <SliderThumb />
+              <SliderTrack />
+            </Slider>
+            <Text>Dithering ({appState?.colorAdjustment.dithering ?? 0}%)</Text>
+            <Slider
+              min={0}
+              max={100}
+              value={appState?.colorAdjustment.dithering ?? 0}
+              onChange={(val) => onColorAdjustmentChange('dithering', val)}
             >
               <SliderThumb />
               <SliderTrack />

@@ -23,6 +23,29 @@ export type NewMozaikConfigureProps = { imageData: ImageData; onDone: (state: Ap
   'children'
 >;
 
+const sampleRect = (imageData: ImageData, rectX: number, rectY: number, rectW: number, rectH: number) => {
+  let accR = 0;
+  let accG = 0;
+  let accB = 0;
+
+  for (let y = rectY; y < rectY + rectH; y++) {
+    for (let x = rectX; x < rectX + rectW; x++) {
+      const si = (x + y * imageData.width) * 4; // 4 bytes per pixel
+      accR += imageData.data[si];
+      accG += imageData.data[si + 1];
+      accB += imageData.data[si + 2];
+    }
+  }
+
+  const factor = 1 / (Math.ceil(rectW) * Math.ceil(rectH));
+  return (
+    ((Math.floor(accR * factor) & 0xff) << 16) |
+    ((Math.floor(accG * factor) & 0xff) << 8) |
+    (Math.floor(accB * factor) & 0xff)
+  );
+  //return accB & 0xff;
+};
+
 export const NewMozaikConfigure: FC<NewMozaikConfigureProps> = ({ imageData, onDone, ...modalProps }) => {
   const [width, setWidth] = useState('120');
   const [height, setHeight] = useState('80');
@@ -64,7 +87,8 @@ export const NewMozaikConfigure: FC<NewMozaikConfigureProps> = ({ imageData, onD
         const sy = Math.floor(y * sampleHeight);
         const si = (sx + sy * imageData.width) * 4; // 4 bytes per pixel
 
-        sourceColors[x + y * w] = (imageData.data[si] << 16) | (imageData.data[si + 1] << 8) | imageData.data[si + 2];
+        //sourceColors[x + y * w] = (imageData.data[si] << 16) | (imageData.data[si + 1] << 8) | imageData.data[si + 2];
+        sourceColors[x + y * w] = sampleRect(imageData, sx, sy, sampleWidth, sampleHeight);
       }
     }
 
@@ -76,6 +100,7 @@ export const NewMozaikConfigure: FC<NewMozaikConfigureProps> = ({ imageData, onD
         hue: 0,
         brightness: 0,
         saturation: 0,
+        dithering: 0,
       },
     });
   }, [width, height, imageData]);

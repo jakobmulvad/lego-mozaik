@@ -6,5 +6,6 @@ export type AppState = {
     hue: number;
     saturation: number;
     brightness: number;
+    dithering: number;
   };
 };

@@ -51,7 +51,6 @@ export const Canvas: FC<{ legoColors: LegoColor[]; width: number; height: number
   height,
 }) => {
   const [offscreenBuffer, setOffscreenBuffer] = useState<HTMLCanvasElement | undefined>();
-  const [transform, setTransform] = useState<DOMMatrix>(new DOMMatrix());
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Keep canvas fullscreen
@@ -69,11 +68,12 @@ export const Canvas: FC<{ legoColors: LegoColor[]; width: number; height: number
       return;
     }
 
+    const transform = ctx.getTransform();
     ctx.resetTransform();
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     ctx.setTransform(transform);
     ctx.drawImage(offscreenBuffer, 0, 0);
-  }, [offscreenBuffer, transform]);
+  }, [offscreenBuffer]);
 
   useEffect(() => {
     const canvas = document.createElement('canvas');
@@ -126,14 +126,10 @@ export const Canvas: FC<{ legoColors: LegoColor[]; width: number; height: number
         return;
       }
 
-      setTransform((current) => {
-        const trans = new DOMMatrix().translate(evt.movementX, evt.movementY);
-        return current.multiply(trans);
-      });
-      //transform.translate(evt.movementX, evt.movementY);
+      ctx.translate(evt.movementX, evt.movementY);
       render();
     },
-    [render, setTransform]
+    [render]
   );
 
   const onWheel = useCallback(
@@ -145,10 +141,11 @@ export const Canvas: FC<{ legoColors: LegoColor[]; width: number; height: number
         return;
       }
 
-      setTransform((current) => current.scale(1 + evt.deltaY * 0.001));
+      const scale = 1 + evt.deltaY * 0.001;
+      ctx.scale(scale, scale);
       render();
     },
-    [render, setTransform]
+    [render]
   );
 
   return <canvas ref={canvasRef} onMouseMove={onMouseMove} onWheel={onWheel} />;
