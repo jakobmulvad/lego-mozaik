@@ -19,7 +19,7 @@ export type NewMozaikChooseImageProps = { onDone: (imageData: ImageData) => void
 
 export const NewMozaikChooseImage: FC<NewMozaikChooseImageProps> = ({ onDone, ...modalProps }) => {
   const [imageUrl, setImageUrl] = useState(
-    'https://assets.change.org/photos/9/rg/bj/nmrgBjEiSuFQlGQ-1600x900-noPad.jpg?1626182653'
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS2mb7XopPFP0GWnk6QU5uTeFZoER434_X8xyRrCO6mOnZrcag0upvyf1kbof_TUPFoPsE&usqp=CAU'
   );
   const [error, setError] = useState<string | undefined>();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -85,6 +85,7 @@ export const NewMozaikChooseImage: FC<NewMozaikChooseImageProps> = ({ onDone, ..
           <Stack spacing={8} m={16}>
             <Stack direction="row" justifyContent="center" alignItems="center">
               <Input
+                tabIndex={1}
                 placeholder="https://some.url/some-picture.jpg"
                 value={imageUrl}
                 onChange={handleUrlChange}

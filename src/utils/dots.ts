@@ -50,3 +50,15 @@ export const dotsInWorldmap: Record<number, number> = {
   6322819: 1607,
   6311436: 601,
 };
+
+export const generateShoppingList = (legoColors: LegoColor[]) => {
+  return legoColors.reduce<Record<number, number>>((acc, color) => {
+    const dot = DOTS.find((d) => d.color === color);
+
+    if (dot) {
+      acc[dot.element] = (acc[dot.element] ?? 0) + 1;
+    }
+
+    return acc;
+  }, {});
+};

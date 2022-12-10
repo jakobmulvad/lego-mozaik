@@ -2,10 +2,11 @@ import { Box, Button, Text, Stack, useDisclosure, Slider, SliderThumb, SliderTra
 import { FC, useCallback, useMemo, useState } from 'react';
 import { FloatingPanel } from './components/FloatingPanel';
 import { NewMozaikModel } from './components/NewMozaikModal';
-import { StarIcon } from '@chakra-ui/icons';
+import { DownloadIcon, StarIcon } from '@chakra-ui/icons';
 import { AppState } from './app-state';
 import { Canvas } from './components/Canvas';
 import { findBestMatchingColor, hslToRgb, LegoColor, rgbToHsl } from './utils/lego-colors';
+import { ShoppingListModal } from './components/ShoppingListModal';
 
 /*
 const buildPlateLayer = (imageData: ImageData): PlateLayer => {
@@ -54,6 +55,8 @@ const buildDotLayer = (imageData: ImageData): DotLayer => {
 
 const App: FC = () => {
   const [appState, setAppState] = useState<AppState | undefined>();
+  const { isOpen: isCreateOpen, onClose: onCreateClose, onOpen: onCreateOpen } = useDisclosure();
+  const { isOpen: isGenerateOpen, onClose: onGenerateClose, onOpen: onGenerateOpen } = useDisclosure();
 
   const legoColors = useMemo(() => {
     if (!appState) {
@@ -123,53 +126,6 @@ const App: FC = () => {
     return colorBuffer;
   }, [appState]);
 
-  /*
-  // Calculate shopping list
-  useEffect(() => {
-    const shoppingList: Record<number, number> = {};
-
-    const addToShoppingList = (element: number) => {
-      shoppingList[element] = (shoppingList[element] ?? 0) + 1;
-    };
-
-    // Count elements in layers
-    for (const layer of layers) {
-      switch (layer.type) {
-        case 'DOT':
-          layer.dots.map((d) => d.element).forEach(addToShoppingList);
-          break;
-
-        case 'PLATE':
-          layer.placements.map((p) => p.brick.element).forEach(addToShoppingList);
-          break;
-      }
-    }
-
-    // Subtract elements from world map set
-    for (const element of Object.keys(dotsInWorldmap)) {
-      if (element in shoppingList) {
-        const elementNo: number = element as unknown as number;
-        const newCount = Math.max(0, shoppingList[elementNo] - dotsInWorldmap[elementNo]);
-        if (newCount == 0) {
-          delete shoppingList[elementNo];
-        } else {
-          shoppingList[elementNo] = newCount;
-        }
-      }
-    }
-
-    console.log(shoppingList);
-
-    /*const totalPrice = Object.keys(elementDistribution).reduce<number>((acc, elementUn) => {
-      const element = elementUn as unknown as number;
-      const dotsFromWorldmap = dotsInWorldmap[element] ?? 0;
-      const dotsNeeded = Math.max(0, elementDistribution[element] - dotsFromWorldmap);
-      return acc + 0.26 * dotsNeeded;
-    }, 0);
-  }, [layers]);*/
-
-  const { isOpen, onClose, onOpen } = useDisclosure();
-
   const onColorAdjustmentChange = useCallback(
     <T extends keyof AppState['colorAdjustment']>(property: T, value: AppState['colorAdjustment'][T]) => {
       setAppState(
@@ -189,13 +145,11 @@ const App: FC = () => {
   return (
     <main style={{ backgroundColor: '#202030', height: '100vh' }}>
       {legoColors && appState && <Canvas legoColors={legoColors} width={appState.width} height={appState.height} />}
-      <Box position="absolute" left={8} top={8} flexDirection="column">
+      <Box position="absolute" left={2} top={2} flexDirection="column">
         <FloatingPanel>
-          <Stack spacing={4} direction="row">
-            <Button leftIcon={<StarIcon />} onClick={onOpen}>
-              New mozaik
-            </Button>
-          </Stack>
+          <Button leftIcon={<StarIcon />} onClick={onCreateOpen}>
+            New mozaik
+          </Button>
         </FloatingPanel>
 
         <FloatingPanel>
@@ -244,6 +198,14 @@ const App: FC = () => {
           </Stack>
         </FloatingPanel>
 
+        <FloatingPanel>
+          <Stack spacing={4} direction="row">
+            <Button leftIcon={<DownloadIcon />} onClick={onGenerateOpen} disabled={!legoColors}>
+              Generate shopping list
+            </Button>
+          </Stack>
+        </FloatingPanel>
+
         {/*
         <FloatingPanel>
           <Text>Elevation</Text>
@@ -251,7 +213,8 @@ const App: FC = () => {
         </FloatingPanel>
         */}
       </Box>
-      <NewMozaikModel isOpen={isOpen} onClose={onClose} onDone={setAppState} />
+      <NewMozaikModel isOpen={isCreateOpen} onClose={onCreateClose} onDone={setAppState} />
+      {legoColors && <ShoppingListModal isOpen={isGenerateOpen} onClose={onGenerateClose} legoColors={legoColors} />}
     </main>
   );
 };
