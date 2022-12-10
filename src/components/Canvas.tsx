@@ -135,8 +135,6 @@ export const Canvas: FC<{ legoColors: LegoColor[]; width: number; height: number
 
   const onWheel = useCallback(
     (evt: WheelEvent<HTMLCanvasElement>) => {
-      console.log(evt.deltaY);
-
       const ctx = canvasRef.current?.getContext('2d');
       if (!ctx) {
         return;
