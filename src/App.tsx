@@ -2,9 +2,10 @@ import { Box, Button, Text, Stack, useDisclosure, Slider, SliderThumb, SliderTra
 import { FC, useCallback, useMemo, useState } from 'react';
 import { FloatingPanel } from './components/FloatingPanel';
 import { NewMozaikModel } from './components/NewMozaikModal';
-import { StarIcon, AddIcon } from '@chakra-ui/icons';
+import { StarIcon } from '@chakra-ui/icons';
 import { AppState } from './app-state';
 import { Canvas } from './components/Canvas';
+import { findBestMatchingColor, hslToRgb, LegoColor, rgbToHsl } from './utils/lego-colors';
 
 /*
 const buildPlateLayer = (imageData: ImageData): PlateLayer => {
@@ -59,12 +60,12 @@ const App: FC = () => {
       return undefined;
     }
 
-    return appState.sourceColors.map((s) => ({
+    /*return appState.sourceColors.map((s) => ({
       number: 1,
       code: s,
-    }));
+    }));*/
 
-    /*const colorBuffer = appState.sourceColors.slice() as unknown as LegoColor[];
+    const colorBuffer = appState.sourceColors.slice() as unknown as LegoColor[];
     const errorBufferR = new Int16Array((appState.width + 1) * (appState.height + 1)).fill(0);
     const errorBufferG = errorBufferR.slice();
     const errorBufferB = errorBufferR.slice();
@@ -120,40 +121,9 @@ const App: FC = () => {
       }
     }
     return colorBuffer;
-    ¨
-  */
   }, [appState]);
 
-  /*const onChange = (evt: ChangeEvent<HTMLInputElement>, type: Layer['type']) => {
-    const file = evt.target.files?.[0];
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!file || !ctx) {
-      return;
-    }
-
-    const img = new Image();
-    img.onload = () => {
-      ctx.drawImage(img, 0, 0);
-      const imageData = ctx.getImageData(0, 0, img.width, img.height);
-      let layer: Layer;
-
-      switch (type) {
-        case 'DOT':
-          layer = buildDotLayer(imageData);
-          break;
-        case 'PLATE':
-          layer = buildPlateLayer(imageData);
-          break;
-      }
-
-      setLayers((curr) => [...curr, layer]);
-
-      URL.revokeObjectURL(img.src);
-    };
-    img.src = URL.createObjectURL(file);
-  };
-
+  /*
   // Calculate shopping list
   useEffect(() => {
     const shoppingList: Record<number, number> = {};
@@ -274,10 +244,12 @@ const App: FC = () => {
           </Stack>
         </FloatingPanel>
 
+        {/*
         <FloatingPanel>
           <Text>Elevation</Text>
           <Button leftIcon={<AddIcon />}>Add elevation</Button>
         </FloatingPanel>
+        */}
       </Box>
       <NewMozaikModel isOpen={isOpen} onClose={onClose} onDone={setAppState} />
     </main>
@@ -285,24 +257,3 @@ const App: FC = () => {
 };
 
 export default App;
-
-/*<Stack direction="column" spacing={1}>
-          <Box>
-            <Typography variant="h5">Layers</Typography>
-            {layers.map((l) => {
-              if (l.type === 'DOT') {
-                return <Typography ml={1}>Color ({l.dots.length} pieces)</Typography>;
-              }
-              return <Typography ml={1}>Elevation ({l.placements.length} pieces)</Typography>;
-            })}
-          </Box>
-          <Divider></Divider>
-          <label>
-            <input style={{ display: 'none' }} type="file" onChange={(evt) => onChange(evt, 'DOT')} />
-          </label>
-
-          <label>
-            <input style={{ display: 'none' }} type="file" onChange={(evt) => onChange(evt, 'PLATE')} />
-          </label>
-        </Stack>
-          */

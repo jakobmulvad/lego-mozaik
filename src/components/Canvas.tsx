@@ -1,7 +1,7 @@
 import { FC, useEffect, useRef, useCallback, MouseEvent, useState, WheelEvent } from 'react';
-import { BrickPlacement } from '../brick-optimizer';
-import { Dot } from '../dots';
-import { LegoColor } from '../lego-colors';
+import { BrickPlacement } from '../utils/brick-optimizer';
+import { Dot } from '../utils/dots';
+import { LegoColor } from '../utils/lego-colors';
 
 export type PlateLayer = {
   type: 'PLATE';
@@ -34,6 +34,7 @@ const renderPlateLayer = (ctx: CanvasRenderingContext2D, layer: PlateLayer, idx:
 };
 
 const renderDotLayer = (ctx: CanvasRenderingContext2D, colors: LegoColor[], width: number, height: number) => {
+  // eslint-disable-next-line no-debugger
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const color = colors[x + y * width];

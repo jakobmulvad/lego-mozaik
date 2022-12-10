@@ -16,39 +16,18 @@ import {
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowForwardIcon, InfoIcon, WarningTwoIcon } from '@chakra-ui/icons';
 import { AppState } from '../app-state';
-import { suggestMozaikDimmensions } from '../helpers';
+import { suggestMozaikDimmensions } from '../utils/helpers';
+import { sampleRect } from '../utils/graphics';
 
 export type NewMozaikConfigureProps = { imageData: ImageData; onDone: (state: AppState) => void } & Omit<
   ModalProps,
   'children'
 >;
 
-const sampleRect = (imageData: ImageData, rectX: number, rectY: number, rectW: number, rectH: number) => {
-  let accR = 0;
-  let accG = 0;
-  let accB = 0;
-
-  for (let y = rectY; y < rectY + rectH; y++) {
-    for (let x = rectX; x < rectX + rectW; x++) {
-      const si = (x + y * imageData.width) * 4; // 4 bytes per pixel
-      accR += imageData.data[si];
-      accG += imageData.data[si + 1];
-      accB += imageData.data[si + 2];
-    }
-  }
-
-  const factor = 1 / (Math.ceil(rectW) * Math.ceil(rectH));
-  return (
-    ((Math.floor(accR * factor) & 0xff) << 16) |
-    ((Math.floor(accG * factor) & 0xff) << 8) |
-    (Math.floor(accB * factor) & 0xff)
-  );
-  //return accB & 0xff;
-};
-
 export const NewMozaikConfigure: FC<NewMozaikConfigureProps> = ({ imageData, onDone, ...modalProps }) => {
   const [width, setWidth] = useState('120');
   const [height, setHeight] = useState('80');
+  const [doResample, setResample] = useState(false);
 
   useEffect(() => {
     const [mozaikWidth, mozaikHeight] = suggestMozaikDimmensions(imageData.width, imageData.height);
@@ -81,6 +60,25 @@ export const NewMozaikConfigure: FC<NewMozaikConfigureProps> = ({ imageData, onD
 
     const sourceColors = new Array<number>(w * h);
 
+    /*
+    const edges = runKernel(imageData, [-1, -1, -1, -1, 8, -1, -1, -1, -1]);
+    debug edge map
+    const debugCanvas = document.createElement('canvas');
+    debugCanvas.width = imageData.width;
+    debugCanvas.height = imageData.height;
+    document.body.append(debugCanvas);
+    const context2d = debugCanvas.getContext('2d');
+
+    const edgeImageData = edges.flatMap((n) => [n, n, n, 255]);
+
+    const edgeImage = new ImageData(new Uint8ClampedArray(edgeImageData), imageData.width);
+    context2d?.putImageData(edgeImage, 0, 0);
+
+    console.log(edges);*/
+
+    const edgeFactor = 0.75;
+    const avgFactor = 1 - edgeFactor;
+
     for (let x = 0; x < w; x++) {
       for (let y = 0; y < h; y++) {
         const sx = Math.floor(x * sampleWidth);
@@ -88,7 +86,17 @@ export const NewMozaikConfigure: FC<NewMozaikConfigureProps> = ({ imageData, onD
         const si = (sx + sy * imageData.width) * 4; // 4 bytes per pixel
 
         //sourceColors[x + y * w] = (imageData.data[si] << 16) | (imageData.data[si + 1] << 8) | imageData.data[si + 2];
-        sourceColors[x + y * w] = sampleRect(imageData, sx, sy, sampleWidth, sampleHeight);
+        //sourceColors[x + y * w] = sampleRect(imageData, sx, sy, sampleWidth, sampleHeight);
+        //const sigCol = mostSignificantColor(imageData, edges, sx, sy, sampleWidth, sampleHeight);
+        /*const r = Math.trunc(((sigCol >> 16) & 0xff) * edgeFactor + ((avgCol >> 16) & 0xff) * avgFactor);
+        const g = Math.trunc(((sigCol >> 8) & 0xff) * edgeFactor + ((avgCol >> 8) & 0xff) * avgFactor);
+        const b = Math.trunc((sigCol & 0xff) * edgeFactor + (avgCol & 0xff) * avgFactor);
+
+        sourceColors[x + y * w] = (r << 16) | (g << 8) | b;*/
+
+        sourceColors[x + y * w] = doResample
+          ? sampleRect(imageData, sx, sy, sampleWidth, sampleHeight)
+          : (imageData.data[si] << 16) | (imageData.data[si + 1] << 8) | imageData.data[si + 2];
       }
     }
 
@@ -103,7 +111,7 @@ export const NewMozaikConfigure: FC<NewMozaikConfigureProps> = ({ imageData, onD
         dithering: 0,
       },
     });
-  }, [width, height, imageData]);
+  }, [width, height, imageData, doResample]);
 
   return (
     <Modal closeOnOverlayClick={false} {...modalProps}>
@@ -123,25 +131,30 @@ export const NewMozaikConfigure: FC<NewMozaikConfigureProps> = ({ imageData, onD
               The aspect ratio of the input image ({(imageData.width / sourceAspectDivident).toFixed(2)} :{' '}
               {(imageData.height / sourceAspectDivident).toFixed(2)}) is very different from the aspect of the mozaik
             </Text>
+            {/*
             <Checkbox>
               Preserve aspect
               <Tooltip label="Instead of scaling source image to fit the aspect of the mozaik we instead crop it to preserve the aspect of the source image">
                 <InfoIcon ml={1} />
               </Tooltip>
             </Checkbox>
+            */}
 
-            <Checkbox>
+            <Checkbox checked={doResample} onChange={(evt) => setResample(evt.target.checked)}>
               Resample
               <Tooltip label="Instead of doing a single sample per mozaik tile we resample the source image to find the average color for each tile. This produces more accurate colors but tend to reduce detail.">
                 <InfoIcon ml={1} />
               </Tooltip>
             </Checkbox>
+
+            {/*
             <Checkbox isDisabled={true}>
               Preserve detail
               <Tooltip label="Attempt to mitigate the loss of detail from resampling by applying an edge detection algorithm and prioritise the color of edges over smooth areas">
                 <InfoIcon ml={1} />
               </Tooltip>
             </Checkbox>
+            */}
           </Stack>
         </ModalBody>
         <ModalFooter>
